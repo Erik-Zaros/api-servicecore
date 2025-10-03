@@ -54,6 +54,40 @@ return function (App $app) {
         }
     });
 
+    // busca id
+    $app->get('/tickets/{id}', function (Request $request, Response $response, array $args) {
+    $pdo = getDBConnection();
+    $id = (int) $args['id'];
+
+    if ($id <= 0) {
+        return jsonResponse($response, [
+            "success" => false,
+            "error" => ["code" => 400, "message" => "ID inválido"]
+        ], 400);
+    }
+
+    $stmt = $pdo->prepare("SELECT * FROM tbl_ticket WHERE ticket = :id");
+    $stmt->execute([':id' => $id]);
+    $ticket = $stmt->fetch();
+
+        if ($ticket) {
+            $ticket['dados'] = !empty($ticket['request']) ? json_decode($ticket['request'], true) : null;
+            unset($ticket['request']);
+            return jsonResponse($response, [
+                "success" => true,
+                "data" => $ticket
+            ]);
+        } else {
+            return jsonResponse($response, [
+                "success" => false,
+                "error" => [
+                    "code" => 404,
+                    "message" => "Ticket não encontrado"
+                ]
+            ], 404);
+        }
+    });
+
     // atualiza
     $app->put('/tickets/{id}', function (Request $request, Response $response, array $args) {
         $pdo = getDBConnection();
