@@ -48,7 +48,7 @@ return function (App $app) {
                 "success" => false,
                 "error" => [
                     "code" => 404,
-                    "message" => "Nenhum ticket pendente"
+                    "message" => "Nenhum ticket pendente de exportação!"
                 ]
             ], 404);
         }
@@ -108,7 +108,7 @@ return function (App $app) {
             ], 400);
         }
 
-        $stmt = $pdo->prepare("SELECT exportado FROM tbl_ticket WHERE ticket = :id");
+        $stmt = $pdo->prepare("SELECT exportado, status FROM tbl_ticket WHERE ticket = :id");
         $stmt->execute([':id' => $id]);
         $ticketAtual = $stmt->fetch();
 
@@ -117,6 +117,23 @@ return function (App $app) {
                 "success" => false,
                 "error" => ["code" => 404, "message" => "Ticket não encontrado"]
             ], 404);
+        }
+
+        if (isset($body['status'])) {
+            if (in_array($ticketAtual['status'], ['FINALIZADO', 'CANCELADO'])) {
+                $finalizado_cancelado_retorno = $ticketAtual['status'] == 'FINALIZADO' ? 'finalizado' : 'cancelado';
+                return jsonResponse($response, [
+                    "success" => false,
+                    "error" => ["code" => 409, "message" => "Ticket está $finalizado_cancelado_retorno não é possível alterar o status!"]
+                ], 409);
+            }
+        }
+
+        if ($body['exportado'] == true && $ticketAtual['exportado'] == true) {
+            return jsonResponse($response, [
+                "success" => false,
+                "error" => ["code" => 409, "message" => "Ticket já exportado não é possível exportar novamente!"]
+            ], 409);
         }
 
         $updates = [];
