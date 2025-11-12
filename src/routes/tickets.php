@@ -4,13 +4,9 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
 
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../helpers/jsonResponse.php';
 
 return function (App $app) {
-
-    function jsonResponse(Response $response, $data, int $status = 200): Response {
-        $response->getBody()->write(json_encode($data, JSON_UNESCAPED_UNICODE));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
-    }
 
     // busca
     $app->get('/tickets', function (Request $request, Response $response) {

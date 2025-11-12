@@ -22,5 +22,6 @@ $errorMiddleware->setErrorHandler(
 );
 
 (require __DIR__ . '/../src/routes/tickets.php')($app);
+(require __DIR__ . '/../src/routes/tecnicos.php')($app);
 
 $app->run();
