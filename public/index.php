@@ -2,16 +2,20 @@
 use Slim\Factory\AppFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
+$config = require __DIR__ . '/../src/config.php';
+$apiKey = $config['API_KEY'];
+
 
 $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
+$app->add(new \Middleware\ApiKeyMiddleware($apiKey));
 
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
 $errorMiddleware->setErrorHandler(
     Slim\Exception\HttpNotFoundException::class,
-    function ($request, $handler) use ($app) {
+    function ($request, $exception, $handler) use ($app) {
         $response = $app->getResponseFactory()->createResponse();
         $response->getBody()->write(json_encode([
             "error" => "Rota não encontrada",
