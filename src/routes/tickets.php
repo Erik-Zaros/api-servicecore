@@ -8,8 +8,8 @@ require_once __DIR__ . '/../helpers/jsonResponse.php';
 
 return function (App $app) {
 
-    // busca
-    $app->get('/tickets', function (Request $request, Response $response) {
+    // busca ticket não exportado
+    $app->get('/tickets/naoexportado/', function (Request $request, Response $response) {
         $pdo = getDBConnection();
 
         $params = $request->getQueryParams();
@@ -50,7 +50,39 @@ return function (App $app) {
         }
     });
 
-    // busca id
+	// busca ticket exportado
+    $app->get('/tickets/exportado/', function (Request $request, Response $response) {
+        $pdo = getDBConnection();
+
+        $params = $request->getQueryParams();
+        $sql = "SELECT * FROM tbl_ticket WHERE exportado is true and status not in ('FINALIZADO', 'CANCELADO')";
+        $queryParams = [];
+
+        $sql .= " ORDER BY data_input ASC LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($queryParams);
+        $ticket = $stmt->fetch();
+
+        if ($ticket) {
+            $ticket['dados'] = !empty($ticket['request']) ? json_decode($ticket['request'], true) : null;
+            unset($ticket['request']);
+            return jsonResponse($response, [
+                "success" => true,
+                "data" => $ticket
+            ]);
+        } else {
+            return jsonResponse($response, [
+                "success" => false,
+                "error" => [
+                    "code" => 404,
+                    "message" => "Nenhum ticket exportado!"
+                ]
+            ], 404);
+        }
+    });
+
+    // busca ticket id
     $app->get('/tickets/{id}', function (Request $request, Response $response, array $args) {
     $pdo = getDBConnection();
     $id = (int) $args['id'];
